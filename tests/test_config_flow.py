@@ -62,6 +62,9 @@ class TestConfigFlow:
         with patch(
             "custom_components.fermax_duoxme.config_flow.async_get_clientsession"
         ) as mock_session, patch(
+            "custom_components.fermax_duoxme.async_setup_entry",
+            return_value=True,
+        ) as mock_setup_entry, patch(
             "custom_components.fermax_duoxme.config_flow.FermaxAuth"
         ) as mock_auth_class, patch(
             "custom_components.fermax_duoxme.config_flow.FermaxApiClient"
