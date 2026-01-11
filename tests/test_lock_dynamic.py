@@ -46,7 +46,6 @@ async def test_dynamic_entity_management(hass: HomeAssistant, mock_coordinator, 
         door_id=DoorId(1, 0, 1), title="Door 1", visible=True, door_type="ZERO"
     )
     mock_pairing = MagicMock()
-    mock_pairing.all_visible_doors = [door1]
     mock_pairing.all_doors = [door1]
     mock_pairing.tag = "My House"
     
@@ -69,7 +68,6 @@ async def test_dynamic_entity_management(hass: HomeAssistant, mock_coordinator, 
     door2 = AccessDoor(
         door_id=DoorId(1, 0, 2), title="Door 2", visible=True, door_type="ONE"
     )
-    mock_pairing.all_visible_doors = [door1, door2]
     mock_pairing.all_doors = [door1, door2]
     
     # Trigger update
@@ -82,10 +80,8 @@ async def test_dynamic_entity_management(hass: HomeAssistant, mock_coordinator, 
     assert new_entities_2[0].name == "Door 2"
     
     # 4. Remove the first door
-    mock_pairing.all_visible_doors = [door2]
     mock_pairing.all_doors = [door2]
-    
-    
+        
     # Mock the async_remove method on the entity
     entity_to_remove = None
     # We need to find the entity instance that was created. 

@@ -209,7 +209,7 @@ class FermaxLock(CoordinatorEntity[FermaxDataUpdateCoordinator], LockEntity):
         """Return if entity is available."""
         # Check both coordinator availability and our own visibility flag
         return super().available and self._attr_available
-
+    
     async def async_lock(self, **kwargs: Any) -> None:
         """Lock the door.
 
