@@ -45,10 +45,10 @@ async def async_setup_entry(
 
         current_doors: dict[str, tuple[str, AccessDoor, str]] = {}
 
-        # Identify all currently visible doors
+        # Identify all doors (visible or not)
         for device_id, device_data in coordinator.data.devices.items():
             pairing = device_data.pairing
-            for door in pairing.all_visible_doors:
+            for door in pairing.all_doors:
                 # Generate the same unique ID mechanism as FermaxLock
                 unique_id = f"{device_id}_{door.door_type}_{door.door_id.block}_{door.door_id.number}"
                 current_doors[unique_id] = (device_id, door, pairing.tag)
@@ -64,7 +64,8 @@ async def async_setup_entry(
         if new_entities:
             async_add_entities(new_entities)
 
-        # Remove obsolete entities
+        # Remove entities that are no longer in the door list at all (removed from config?)
+        # Note: Hidden doors are still in 'all_doors' so they won't be removed here, just marked unavailable
         to_remove: list[str] = []
         for unique_id, entity in known_entities.items():
             if unique_id not in current_doors:
@@ -108,14 +109,19 @@ class FermaxLock(CoordinatorEntity[FermaxDataUpdateCoordinator], LockEntity):
         self._is_unlocking = False
 
         # Generate a unique door name
-        door_name = door.title if door.title else door.door_type
-        if not door_name or door_name == door.door_type:
-            door_name = f"Door {door.door_type}"
-
-        self._attr_name = door_name
+        self._attr_name = self._get_door_name(door)
         self._attr_unique_id = (
             f"{device_id}_{door.door_type}_{door.door_id.block}_{door.door_id.number}"
         )
+        self._attr_available = door.visible
+
+    @staticmethod
+    def _get_door_name(door: AccessDoor) -> str:
+        """Get the display name for a door."""
+        door_name = door.title if door.title else door.door_type
+        if not door_name or door_name == door.door_type:
+            door_name = f"Door {door.door_type}"
+        return door_name
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -159,7 +165,7 @@ class FermaxLock(CoordinatorEntity[FermaxDataUpdateCoordinator], LockEntity):
 
         # Find the specific door
         target_door = None
-        for door in device_data.pairing.all_visible_doors:
+        for door in device_data.pairing.all_doors:
             # Match by semantic ID
             if (
                 door.door_type == self._door.door_type
@@ -170,16 +176,40 @@ class FermaxLock(CoordinatorEntity[FermaxDataUpdateCoordinator], LockEntity):
                 break
 
         if target_door:
+            # Check for changes
+            prev_door = self._door
             self._door = target_door
-            # Update name if changed
-            door_name = target_door.title if target_door.title else target_door.door_type
-            if not door_name or door_name == target_door.door_type:
-                door_name = f"Door {target_door.door_type}"
             
-            self._attr_name = door_name
+            # Update name if changed
+            new_name = self._get_door_name(target_door)
+            if new_name != self._attr_name:
+                _LOGGER.debug(
+                    "Updating door name for %s: '%s' -> '%s' (API title: '%s')",
+                    self._attr_unique_id,
+                    self._attr_name,
+                    new_name,
+                    target_door.title,
+                )
+                self._attr_name = new_name
+
+            # Update availability based on visibility
+            if self._attr_available != target_door.visible:
+                _LOGGER.debug(
+                    "Updating visibility for %s: %s -> %s",
+                    self._attr_unique_id,
+                    self._attr_available,
+                    target_door.visible,
+                )
+                self._attr_available = target_door.visible
         
         super()._handle_coordinator_update()
 
+    @property
+    def available(self) -> bool:
+        """Return if entity is available."""
+        # Check both coordinator availability and our own visibility flag
+        return super().available and self._attr_available
+    
     async def async_lock(self, **kwargs: Any) -> None:
         """Lock the door.
 
