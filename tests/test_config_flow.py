@@ -60,10 +60,13 @@ class TestConfigFlow:
     async def test_form_success_single_device(self, hass, mock_pairing, mock_auth):
         """Test successful config flow with single device."""
         with patch(
+            "custom_components.fermax_duoxme.config_flow.async_get_clientsession"
+        ) as mock_session, patch(
             "custom_components.fermax_duoxme.config_flow.FermaxAuth"
         ) as mock_auth_class, patch(
             "custom_components.fermax_duoxme.config_flow.FermaxApiClient"
         ) as mock_client_class:
+            mock_session.return_value = MagicMock()
             mock_auth_class.return_value = mock_auth
             
             mock_client = MagicMock()
@@ -91,10 +94,13 @@ class TestConfigFlow:
     async def test_form_no_devices(self, hass, mock_auth):
         """Test handling of no devices found."""
         with patch(
+            "custom_components.fermax_duoxme.config_flow.async_get_clientsession"
+        ) as mock_session, patch(
             "custom_components.fermax_duoxme.config_flow.FermaxAuth"
         ) as mock_auth_class, patch(
             "custom_components.fermax_duoxme.config_flow.FermaxApiClient"
         ) as mock_client_class:
+            mock_session.return_value = MagicMock()
             mock_auth_class.return_value = mock_auth
             
             mock_client = MagicMock()
