@@ -1,0 +1,41 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "Fermax DuoxMe Login",
+                "description": "Enter your Fermax DuoxMe account credentials",
+                "data": {
+                    "username": "Email",
+                    "password": "Password"
+                }
+            },
+            "devices": {
+                "title": "Select Devices",
+                "description": "Select which devices to add (found {device_count} devices)",
+                "data": {
+                    "devices": "Devices"
+                }
+            }
+        },
+        "error": {
+            "cannot_connect": "Unable to connect to Fermax servers",
+            "invalid_auth": "Invalid email or password",
+            "no_devices": "No devices found for this account",
+            "no_devices_selected": "Please select at least one device",
+            "unknown": "An unexpected error occurred"
+        },
+        "abort": {
+            "already_configured": "This account is already configured"
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "Fermax DuoxMe Options",
+                "data": {
+                    "polling_interval": "Polling interval (seconds)"
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,15 @@
+{
+    "name": "Fermax DuoxMe",
+    "render_readme": true,
+    "domains": [
+        "lock",
+        "binary_sensor",
+        "sensor",
+        "switch",
+        "camera"
+    ],
+    "country": [
+        "ES"
+    ],
+    "iot_class": "cloud_polling"
+}

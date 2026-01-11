@@ -1,0 +1,41 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "Inicio de sesión en Fermax DuoxMe",
+                "description": "Introduce las credenciales de tu cuenta Fermax DuoxMe",
+                "data": {
+                    "username": "Correo electrónico",
+                    "password": "Contraseña"
+                }
+            },
+            "devices": {
+                "title": "Seleccionar dispositivos",
+                "description": "Selecciona qué dispositivos añadir (se encontraron {device_count} dispositivos)",
+                "data": {
+                    "devices": "Dispositivos"
+                }
+            }
+        },
+        "error": {
+            "cannot_connect": "No se puede conectar a los servidores de Fermax",
+            "invalid_auth": "Correo electrónico o contraseña no válidos",
+            "no_devices": "No se encontraron dispositivos para esta cuenta",
+            "no_devices_selected": "Por favor, selecciona al menos un dispositivo",
+            "unknown": "Se produjo un error inesperado"
+        },
+        "abort": {
+            "already_configured": "Esta cuenta ya está configurada"
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "Opciones de Fermax DuoxMe",
+                "data": {
+                    "polling_interval": "Intervalo de sondeo (segundos)"
+                }
+            }
+        }
+    }
+}
