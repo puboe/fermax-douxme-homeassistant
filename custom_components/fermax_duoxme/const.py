@@ -23,7 +23,7 @@ MIN_POLLING_INTERVAL: Final = 15
 MAX_POLLING_INTERVAL: Final = 300
 
 # Token lifetimes (from API documentation)
-ACCESS_TOKEN_LIFETIME_DAYS: Final = 4
+ACCESS_TOKEN_DEFAULT_LIFETIME: Final = 345599 # ~4 days
 REFRESH_TOKEN_LIFETIME_YEARS: Final = 5
 
 # Platforms
