@@ -28,10 +28,13 @@ class TestConfigFlow:
     async def test_form_invalid_auth(self, hass):
         """Test handling of invalid auth."""
         with patch(
+            "custom_components.fermax_duoxme.config_flow.async_get_clientsession"
+        ) as mock_session, patch(
             "custom_components.fermax_duoxme.config_flow.FermaxAuth"
         ) as mock_auth_class:
             from custom_components.fermax_duoxme.api.auth import InvalidCredentialsError
             
+            mock_session.return_value = MagicMock()
             mock_auth = MagicMock()
             mock_auth.authenticate = AsyncMock(
                 side_effect=InvalidCredentialsError("Invalid")
