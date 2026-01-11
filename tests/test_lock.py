@@ -23,7 +23,10 @@ class TestLockPlatform:
             "custom_components.fermax_duoxme.FermaxAuth"
         ) as mock_auth_class, patch(
             "custom_components.fermax_duoxme.FermaxApiClient"
-        ) as mock_client_class:
+        ) as mock_client_class, patch(
+            "custom_components.fermax_duoxme.async_get_clientsession"
+        ) as mock_session:
+            mock_session.return_value = MagicMock()
             mock_auth_class.return_value = mock_auth
             mock_client_class.return_value = mock_api_client
 
@@ -50,7 +53,10 @@ class TestLockPlatform:
             "custom_components.fermax_duoxme.FermaxAuth"
         ) as mock_auth_class, patch(
             "custom_components.fermax_duoxme.FermaxApiClient"
-        ) as mock_client_class:
+        ) as mock_client_class, patch(
+            "custom_components.fermax_duoxme.async_get_clientsession"
+        ) as mock_session:
+            mock_session.return_value = MagicMock()
             mock_auth_class.return_value = mock_auth
             mock_client_class.return_value = mock_api_client
 
