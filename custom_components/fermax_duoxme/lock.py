@@ -109,15 +109,19 @@ class FermaxLock(CoordinatorEntity[FermaxDataUpdateCoordinator], LockEntity):
         self._is_unlocking = False
 
         # Generate a unique door name
-        door_name = door.title if door.title else door.door_type
-        if not door_name or door_name == door.door_type:
-            door_name = f"Door {door.door_type}"
-
-        self._attr_name = door_name
+        self._attr_name = self._get_door_name(door)
         self._attr_unique_id = (
             f"{device_id}_{door.door_type}_{door.door_id.block}_{door.door_id.number}"
         )
         self._attr_available = door.visible
+
+    @staticmethod
+    def _get_door_name(door: AccessDoor) -> str:
+        """Get the display name for a door."""
+        door_name = door.title if door.title else door.door_type
+        if not door_name or door_name == door.door_type:
+            door_name = f"Door {door.door_type}"
+        return door_name
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -172,15 +176,31 @@ class FermaxLock(CoordinatorEntity[FermaxDataUpdateCoordinator], LockEntity):
                 break
 
         if target_door:
+            # Check for changes
+            prev_door = self._door
             self._door = target_door
-            # Update name if changed
-            door_name = target_door.title if target_door.title else target_door.door_type
-            if not door_name or door_name == target_door.door_type:
-                door_name = f"Door {target_door.door_type}"
             
-            self._attr_name = door_name
+            # Update name if changed
+            new_name = self._get_door_name(target_door)
+            if new_name != self._attr_name:
+                _LOGGER.debug(
+                    "Updating door name for %s: '%s' -> '%s' (API title: '%s')",
+                    self._attr_unique_id,
+                    self._attr_name,
+                    new_name,
+                    target_door.title,
+                )
+                self._attr_name = new_name
+
             # Update availability based on visibility
-            self._attr_available = target_door.visible
+            if self._attr_available != target_door.visible:
+                _LOGGER.debug(
+                    "Updating visibility for %s: %s -> %s",
+                    self._attr_unique_id,
+                    self._attr_available,
+                    target_door.visible,
+                )
+                self._attr_available = target_door.visible
         
         super()._handle_coordinator_update()
 
