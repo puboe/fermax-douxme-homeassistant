@@ -120,16 +120,6 @@ class Pairing:
         )
 
     @property
-    def all_visible_doors(self) -> list[AccessDoor]:
-        """Get all visible doors from accessDoorMap.
-        
-        Note: We explicitly ignore panelAccessDoors as they are duplicates
-        of the doors in accessDoorMap, and we prefer the configuration
-        from accessDoorMap (Door ZERO/ONE etc).
-        """
-        return [d for d in self.access_doors if d.visible]
-
-    @property
     def all_doors(self) -> list[AccessDoor]:
         """Get all doors from accessDoorMap, regardless of visibility.
         

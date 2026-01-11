@@ -38,8 +38,7 @@ async def test_entity_availability_updates(hass: HomeAssistant, mock_coordinator
         door_id=DoorId(1, 0, 1), title="Door 1", visible=True, door_type="ZERO"
     )
     mock_pairing = MagicMock()
-    # Mock both all_doors (used by lock.py) and all_visible_doors (used elsewhere if needed)
-    mock_pairing.all_visible_doors = [door1]
+    # Mock all_doors (used by lock.py)
     mock_pairing.all_doors = [door1]
     mock_pairing.tag = "My House"
     
@@ -68,7 +67,6 @@ async def test_entity_availability_updates(hass: HomeAssistant, mock_coordinator
     door1_hidden = AccessDoor(
         door_id=DoorId(1, 0, 1), title="Door 1", visible=False, door_type="ZERO"
     )
-    mock_pairing.all_visible_doors = []
     mock_pairing.all_doors = [door1_hidden]
     
     # Trigger update on the entity
@@ -82,7 +80,7 @@ async def test_entity_availability_updates(hass: HomeAssistant, mock_coordinator
     door1_visible = AccessDoor(
         door_id=DoorId(1, 0, 1), title="Door 1", visible=True, door_type="ZERO"
     )
-    mock_pairing.all_visible_doors = [door1_visible]
+
     mock_pairing.all_doors = [door1_visible]
     
     # Trigger update
