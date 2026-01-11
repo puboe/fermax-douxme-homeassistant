@@ -12,6 +12,7 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
+from homeassistant.helpers import entity_registry as er
 from .api import AccessDoor, DoorId
 from .const import DOMAIN
 from .coordinator import FermaxDataUpdateCoordinator
@@ -113,7 +114,7 @@ class FermaxLock(CoordinatorEntity[FermaxDataUpdateCoordinator], LockEntity):
         self._attr_unique_id = (
             f"{device_id}_{door.door_type}_{door.door_id.block}_{door.door_id.number}"
         )
-        self._attr_available = door.visible
+
 
     @staticmethod
     def _get_door_name(door: AccessDoor) -> str:
@@ -193,22 +194,33 @@ class FermaxLock(CoordinatorEntity[FermaxDataUpdateCoordinator], LockEntity):
                 self._attr_name = new_name
 
             # Update availability based on visibility
-            if self._attr_available != target_door.visible:
-                _LOGGER.debug(
-                    "Updating visibility for %s: %s -> %s",
-                    self._attr_unique_id,
-                    self._attr_available,
-                    target_door.visible,
-                )
-                self._attr_available = target_door.visible
-        
+            # We no longer use _attr_available for visibility, but disable the entity instead
+            # However, we still track it or just use the registry update.
+            # The requirement is: "hide those entities as well as disabling them"
+            # So if invisible, disable in registry.
+            
+            if prev_door.visible != target_door.visible:
+                registry = er.async_get(self.hass)
+                entry = registry.async_get(self.entity_id)
+                if entry:
+                    if not target_door.visible:
+                        # Hide (Disable)
+                        registry.async_update_entity(
+                            self.entity_id, disabled_by=er.RegistryEntryDisabler.INTEGRATION
+                        )
+                        _LOGGER.debug("Disabling (hiding) lock %s", self.entity_id)
+                    elif entry.disabled_by == er.RegistryEntryDisabler.INTEGRATION:
+                        # Show (Enable) - only if disabled by us
+                        registry.async_update_entity(self.entity_id, disabled_by=None)
+                        _LOGGER.debug("Enabling (showing) lock %s", self.entity_id)
+
         super()._handle_coordinator_update()
 
     @property
     def available(self) -> bool:
         """Return if entity is available."""
-        # Check both coordinator availability and our own visibility flag
-        return super().available and self._attr_available
+        return super().available
+
     
     async def async_lock(self, **kwargs: Any) -> None:
         """Lock the door.
