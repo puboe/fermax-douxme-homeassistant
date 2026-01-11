@@ -1,8 +1,11 @@
 """Test for visibility handling of lock entities."""
 from unittest.mock import MagicMock
 
+import unittest
 import pytest
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
+
 
 from custom_components.fermax_duoxme.lock import async_setup_entry
 from custom_components.fermax_duoxme.const import DOMAIN
@@ -69,22 +72,37 @@ async def test_entity_availability_updates(hass: HomeAssistant, mock_coordinator
     )
     mock_pairing.all_doors = [door1_hidden]
     
-    # Trigger update on the entity
-    entity._handle_coordinator_update()
+    # Mock entity registry
+    mock_registry = MagicMock()
+    mock_registry_entry = MagicMock()
+    # Initial state: not disabled
+    mock_registry_entry.disabled_by = None
+    mock_registry.async_get.return_value = mock_registry_entry
     
-    # Verify entity is now UNAVAILABLE but NOT removed
-    assert entity.available is False
-    assert hass.async_create_task.called is False # Should NOT remove
-    
-    # 3. Update door to be VISIBLE again
-    door1_visible = AccessDoor(
-        door_id=DoorId(1, 0, 1), title="Door 1", visible=True, door_type="ZERO"
-    )
-
-    mock_pairing.all_doors = [door1_visible]
-    
-    # Trigger update
-    entity._handle_coordinator_update()
-    
-    # Verify entity is AVAILABLE again
-    assert entity.available is True
+    # Mock er.async_get
+    with unittest.mock.patch("homeassistant.helpers.entity_registry.async_get", return_value=mock_registry):
+        # Trigger update on the entity
+        entity._handle_coordinator_update()
+        
+        # Verify entity registry update called to DISABLE
+        mock_registry.async_update_entity.assert_called_with(
+            entity.entity_id, disabled_by=er.RegistryEntryDisabler.INTEGRATION
+        )
+        
+        # 3. Update door to be VISIBLE again
+        door1_visible = AccessDoor(
+            door_id=DoorId(1, 0, 1), title="Door 1", visible=True, door_type="ZERO"
+        )
+        mock_pairing.all_doors = [door1_visible]
+        
+        # Simulate registry now showing disabled
+        mock_registry_entry.disabled_by = er.RegistryEntryDisabler.INTEGRATION
+        
+        # Trigger update
+        entity._handle_coordinator_update()
+        
+        # Verify entity registry update called to ENABLE
+        # Note: logic calls update with disabled_by=None
+        mock_registry.async_update_entity.assert_called_with(
+            entity.entity_id, disabled_by=None
+        )
