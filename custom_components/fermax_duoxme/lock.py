@@ -72,6 +72,24 @@ async def async_setup_entry(
             if unique_id not in current_doors:
                 hass.async_create_task(entity.async_remove())
                 to_remove.append(unique_id)
+            else:
+                # Update visibility
+                # If the door becomes visible/invisible, we must update the registry
+                # because disabled entities don't receive updates to re-enable themselves.
+                _, door, _ = current_doors[unique_id]
+                registry = er.async_get(hass)
+                if entity.entity_id and (entry := registry.async_get(entity.entity_id)):
+                     if not door.visible:
+                         # Disable if not already disabled by integration
+                         if entry.disabled_by != er.RegistryEntryDisabler.INTEGRATION:
+                             registry.async_update_entity(
+                                 entity.entity_id, disabled_by=er.RegistryEntryDisabler.INTEGRATION
+                             )
+                             _LOGGER.debug("Disabling (hiding) lock %s", entity.entity_id)
+                     elif entry.disabled_by == er.RegistryEntryDisabler.INTEGRATION:
+                         # Enable if disabled by integration
+                         registry.async_update_entity(entity.entity_id, disabled_by=None)
+                         _LOGGER.debug("Enabling (showing) lock %s", entity.entity_id)
 
         for unique_id in to_remove:
             del known_entities[unique_id]
@@ -114,6 +132,11 @@ class FermaxLock(CoordinatorEntity[FermaxDataUpdateCoordinator], LockEntity):
         self._attr_unique_id = (
             f"{device_id}_{door.door_type}_{door.door_id.block}_{door.door_id.number}"
         )
+
+    @property
+    def entity_registry_enabled_default(self) -> bool:
+        """Return if the entity should be enabled when first added to the entity registry."""
+        return self._door.visible
 
 
     @staticmethod
@@ -194,25 +217,8 @@ class FermaxLock(CoordinatorEntity[FermaxDataUpdateCoordinator], LockEntity):
                 self._attr_name = new_name
 
             # Update availability based on visibility
-            # We no longer use _attr_available for visibility, but disable the entity instead
-            # However, we still track it or just use the registry update.
-            # The requirement is: "hide those entities as well as disabling them"
-            # So if invisible, disable in registry.
-            
-            if prev_door.visible != target_door.visible:
-                registry = er.async_get(self.hass)
-                entry = registry.async_get(self.entity_id)
-                if entry:
-                    if not target_door.visible:
-                        # Hide (Disable)
-                        registry.async_update_entity(
-                            self.entity_id, disabled_by=er.RegistryEntryDisabler.INTEGRATION
-                        )
-                        _LOGGER.debug("Disabling (hiding) lock %s", self.entity_id)
-                    elif entry.disabled_by == er.RegistryEntryDisabler.INTEGRATION:
-                        # Show (Enable) - only if disabled by us
-                        registry.async_update_entity(self.entity_id, disabled_by=None)
-                        _LOGGER.debug("Enabling (showing) lock %s", self.entity_id)
+            # Visibility updates are now handled in the global coordinator listener
+            # to ensure disabled entities can be re-enabled.
 
         super()._handle_coordinator_update()
 
