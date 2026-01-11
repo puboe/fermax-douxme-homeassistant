@@ -118,6 +118,35 @@ class TestPairing:
         assert len(visible_doors) == 1
         assert visible_doors[0].title == "F1"
 
+    def test_all_visible_doors_ignores_panel(self):
+        """Test that panelAccessDoors are ignored, only accessDoorMap used."""
+        data = {
+            "id": "pairing1",
+            "deviceId": "dev1",
+            "accessDoorMap": {
+                "ZERO": {
+                    "accessId": {"block": 1, "subblock": 0, "number": 1},
+                    "title": "Door ZERO",
+                    "visible": True
+                }
+            },
+            "panelAccessDoors": [
+                {
+                    "doorId": {"block": 1, "subblock": 0, "number": 1},
+                    "title": "Panel Door",
+                    "isVisible": True
+                }
+            ]
+        }
+        pairing = Pairing.from_dict(data)
+        
+        visible_doors = pairing.all_visible_doors
+        assert len(visible_doors) == 1
+        assert visible_doors[0].title == "Door ZERO"
+        assert visible_doors[0].door_type == "ZERO"
+
+
+
 
 class TestDeviceInfo:
     """Tests for DeviceInfo class."""

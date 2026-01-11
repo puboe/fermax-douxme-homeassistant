@@ -35,24 +35,48 @@ async def async_setup_entry(
         "coordinator"
     ]
 
-    entities: list[FermaxLock] = []
+    known_entities: dict[str, FermaxLock] = {}
 
-    # Create lock entity for each visible door on each device
-    if coordinator.data:
+    @callback
+    def _async_update_entities() -> None:
+        """Update entities based on coordinator data."""
+        if not coordinator.data:
+            return
+
+        current_doors: dict[str, tuple[str, AccessDoor, str]] = {}
+
+        # Identify all currently visible doors
         for device_id, device_data in coordinator.data.devices.items():
             pairing = device_data.pairing
-
             for door in pairing.all_visible_doors:
-                entities.append(
-                    FermaxLock(
-                        coordinator=coordinator,
-                        device_id=device_id,
-                        door=door,
-                        device_tag=pairing.tag,
-                    )
-                )
+                # Generate the same unique ID mechanism as FermaxLock
+                unique_id = f"{device_id}_{door.door_type}_{door.door_id.block}_{door.door_id.number}"
+                current_doors[unique_id] = (device_id, door, pairing.tag)
 
-    async_add_entities(entities)
+        # Add new entities
+        new_entities: list[FermaxLock] = []
+        for unique_id, (device_id, door, tag) in current_doors.items():
+            if unique_id not in known_entities:
+                entity = FermaxLock(coordinator, device_id, door, tag)
+                known_entities[unique_id] = entity
+                new_entities.append(entity)
+
+        if new_entities:
+            async_add_entities(new_entities)
+
+        # Remove obsolete entities
+        to_remove: list[str] = []
+        for unique_id, entity in known_entities.items():
+            if unique_id not in current_doors:
+                hass.async_create_task(entity.async_remove())
+                to_remove.append(unique_id)
+
+        for unique_id in to_remove:
+            del known_entities[unique_id]
+
+    # Register listener and perform initial update
+    entry.async_on_unload(coordinator.async_add_listener(_async_update_entities))
+    _async_update_entities()
 
 
 class FermaxLock(CoordinatorEntity[FermaxDataUpdateCoordinator], LockEntity):
@@ -121,6 +145,40 @@ class FermaxLock(CoordinatorEntity[FermaxDataUpdateCoordinator], LockEntity):
     def is_unlocking(self) -> bool:
         """Return true if lock is unlocking."""
         return self._is_unlocking
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        # Find our door in the new data
+        if not self.coordinator.data:
+            return
+
+        device_data = self.coordinator.data.devices.get(self._device_id)
+        if not device_data:
+            return
+
+        # Find the specific door
+        target_door = None
+        for door in device_data.pairing.all_visible_doors:
+            # Match by semantic ID
+            if (
+                door.door_type == self._door.door_type
+                and door.door_id.block == self._door.door_id.block
+                and door.door_id.number == self._door.door_id.number
+            ):
+                target_door = door
+                break
+
+        if target_door:
+            self._door = target_door
+            # Update name if changed
+            door_name = target_door.title if target_door.title else target_door.door_type
+            if not door_name or door_name == target_door.door_type:
+                door_name = f"Door {target_door.door_type}"
+            
+            self._attr_name = door_name
+        
+        super()._handle_coordinator_update()
 
     async def async_lock(self, **kwargs: Any) -> None:
         """Lock the door.

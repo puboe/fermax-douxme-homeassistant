@@ -121,10 +121,13 @@ class Pairing:
 
     @property
     def all_visible_doors(self) -> list[AccessDoor]:
-        """Get all visible doors from both accessDoorMap and panelAccessDoors."""
-        visible = [d for d in self.access_doors if d.visible]
-        visible.extend([d for d in self.panel_access_doors if d.visible])
-        return visible
+        """Get all visible doors from accessDoorMap.
+        
+        Note: We explicitly ignore panelAccessDoors as they are duplicates
+        of the doors in accessDoorMap, and we prefer the configuration
+        from accessDoorMap (Door ZERO/ONE etc).
+        """
+        return [d for d in self.access_doors if d.visible]
 
 
 @dataclass
