@@ -47,6 +47,7 @@ async def test_dynamic_entity_management(hass: HomeAssistant, mock_coordinator, 
     )
     mock_pairing = MagicMock()
     mock_pairing.all_visible_doors = [door1]
+    mock_pairing.all_doors = [door1]
     mock_pairing.tag = "My House"
     
     mock_device_data = MagicMock()
@@ -69,6 +70,7 @@ async def test_dynamic_entity_management(hass: HomeAssistant, mock_coordinator, 
         door_id=DoorId(1, 0, 2), title="Door 2", visible=True, door_type="ONE"
     )
     mock_pairing.all_visible_doors = [door1, door2]
+    mock_pairing.all_doors = [door1, door2]
     
     # Trigger update
     listener()
@@ -81,6 +83,8 @@ async def test_dynamic_entity_management(hass: HomeAssistant, mock_coordinator, 
     
     # 4. Remove the first door
     mock_pairing.all_visible_doors = [door2]
+    mock_pairing.all_doors = [door2]
+    
     
     # Mock the async_remove method on the entity
     entity_to_remove = None
@@ -119,6 +123,7 @@ async def test_dynamic_name_update(hass: HomeAssistant, mock_coordinator, mock_c
     )
     mock_pairing = MagicMock()
     mock_pairing.all_visible_doors = [door1]
+    mock_pairing.all_doors = [door1]
     mock_pairing.tag = "My House"
     
     mock_device_data = MagicMock()
@@ -143,6 +148,7 @@ async def test_dynamic_name_update(hass: HomeAssistant, mock_coordinator, mock_c
         door_id=DoorId(1, 0, 1), title="New Name", visible=True, door_type="ZERO"
     )
     mock_pairing.all_visible_doors = [door1_new]
+    mock_pairing.all_doors = [door1_new]
     
     # Trigger coordinator update
     # The entity is a CoordinatorEntity, so it listens to update.

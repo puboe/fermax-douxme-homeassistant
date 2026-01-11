@@ -129,6 +129,15 @@ class Pairing:
         """
         return [d for d in self.access_doors if d.visible]
 
+    @property
+    def all_doors(self) -> list[AccessDoor]:
+        """Get all doors from accessDoorMap, regardless of visibility.
+        
+        Note: We explicitly ignore panelAccessDoors as they are duplicates
+        of the doors in accessDoorMap.
+        """
+        return self.access_doors
+
 
 @dataclass
 class DeviceInfo:
