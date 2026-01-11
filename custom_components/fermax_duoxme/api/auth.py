@@ -16,12 +16,14 @@ from ..const import (
     APP_VERSION,
     CLIENT_ID,
     CLIENT_SECRET,
+    OAUTH_URL,
+    ACCESS_TOKEN_DEFAULT_LIFETIME,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
 # OAuth2 endpoints
-OAUTH_TOKEN_URL = f"{API_BASE_URL}/oauth/token"
+OAUTH_TOKEN_URL = f"{OAUTH_URL}/oauth/token"
 
 
 @dataclass
@@ -41,7 +43,7 @@ class TokenData:
             access_token=data.get("access_token", ""),
             refresh_token=data.get("refresh_token", ""),
             token_type=data.get("token_type", "Bearer"),
-            expires_in=data.get("expires_in", 345600),  # ~4 days default
+            expires_in=data.get("expires_in", ACCESS_TOKEN_DEFAULT_LIFETIME),
             created_at=datetime.now(),
         )
 
@@ -80,7 +82,7 @@ class TokenData:
             access_token=data.get("access_token", ""),
             refresh_token=data.get("refresh_token", ""),
             token_type=data.get("token_type", "Bearer"),
-            expires_in=data.get("expires_in", 345600),
+            expires_in=data.get("expires_in", ACCESS_TOKEN_DEFAULT_LIFETIME),
             created_at=created_at,
         )
 
@@ -176,10 +178,14 @@ class FermaxAuth:
                     error_data = await response.json()
                     error = error_data.get("error", "")
                     if error == "invalid_grant":
+                        _LOGGER.warning("Invalid credentials: %s", error_data)
                         raise InvalidCredentialsError("Invalid username or password")
+                    _LOGGER.error("Authentication failed: %s (Data: %s)", error, error_data)
                     raise FermaxAuthError(f"Authentication failed: {error}")
 
                 if response.status != 200:
+                    text = await response.text()
+                    _LOGGER.error("Authentication failed with status %s. Response: %s", response.status, text)
                     raise FermaxAuthError(
                         f"Authentication failed with status {response.status}"
                     )
@@ -225,6 +231,8 @@ class FermaxAuth:
                     raise TokenRefreshError(f"Token refresh failed: {error}")
 
                 if response.status != 200:
+                    text = await response.text()
+                    _LOGGER.error("Token refresh failed with status %s. Response: %s", response.status, text)
                     raise TokenRefreshError(
                         f"Token refresh failed with status {response.status}"
                     )
