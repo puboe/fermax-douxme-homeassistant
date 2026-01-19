@@ -1,15 +1,14 @@
 {
   "domain": "fermax_duoxme",
   "name": "Fermax DuoxMe",
-  "codeowners": ["@puboe"],
+  "codeowners": [
+    "@puboe"
+  ],
   "config_flow": true,
   "dependencies": [],
   "documentation": "https://github.com/puboe/fermax-douxme-homeassistant",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/puboe/fermax-douxme-homeassistant/issues",
-  "requirements": [
-    "aiohttp>=3.13.3",
-    "PyJWT>=2.10.1"
-  ],
+  "requirements": [],
   "version": "1.0.0"
 }
