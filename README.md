@@ -61,7 +61,7 @@ For each paired device, the integration creates:
 | Sensor | `sensor.fermax_{tag}_signal_strength` | WiFi signal (0-100%) |
 | Camera | `camera.fermax_{tag}` | PhotoCaller (if enabled) |
 
-> **Note:** The `{tag}` is the name you gave your device in the Fermax DuoxMe app (e.g., "Front Door", "Sardenya").
+> **Note:** The `{tag}` is the name you gave your device in the Fermax DuoxMe app (e.g., "Front Door").
 
 ## Example Automations
 
