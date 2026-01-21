@@ -18,7 +18,7 @@ APP_VERSION: Final = "4.2.5"
 APP_BUILD: Final = "2"
 
 # Default configuration
-DEFAULT_POLLING_INTERVAL: Final = 30  # seconds
+DEFAULT_POLLING_INTERVAL: Final = 60  # seconds
 MIN_POLLING_INTERVAL: Final = 15
 MAX_POLLING_INTERVAL: Final = 300
 
