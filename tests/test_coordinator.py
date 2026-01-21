@@ -144,49 +144,54 @@ class TestFermaxData:
         assert fermax_data.get_device("d2").pairing.tag == "Door2"
 
 
+@pytest.fixture
+def mock_hass():
+    """Create a mock Home Assistant instance."""
+    hass = MagicMock()
+    hass.data = {}
+    return hass
+
+
+@pytest.fixture
+def mock_entry():
+    """Create a mock config entry."""
+    entry = MagicMock()
+    entry.options = {}
+    return entry
+
+
+@pytest.fixture
+def mock_client():
+    """Create a mock API client."""
+    client = MagicMock()
+    client.get_pairings = AsyncMock()
+    client.get_device = AsyncMock()
+    client.get_services = AsyncMock(return_value=[])
+    return client
+
+
+@pytest.fixture
+def mock_pairing_data():
+    """Create a mock pairing."""
+    return Pairing.from_dict({
+        "id": "p1",
+        "deviceId": "d1",
+        "tag": "Test",
+        "enabled": True,
+    })
+
+
+@pytest.fixture
+def mock_device():
+    """Create a mock device info."""
+    return DeviceInfo.from_dict({
+        "connectionState": "Connected",
+        "wirelessSignal": 4,
+    })
+
+
 class TestCoordinatorFailureTolerance:
     """Tests for coordinator failure tolerance behavior."""
-
-    @pytest.fixture
-    def mock_hass(self):
-        """Create a mock Home Assistant instance."""
-        hass = MagicMock()
-        hass.data = {}
-        return hass
-
-    @pytest.fixture
-    def mock_entry(self):
-        """Create a mock config entry."""
-        entry = MagicMock()
-        entry.options = {}
-        return entry
-
-    @pytest.fixture
-    def mock_client(self):
-        """Create a mock API client."""
-        client = MagicMock()
-        client.get_pairings = AsyncMock()
-        client.get_device = AsyncMock()
-        client.get_services = AsyncMock(return_value=[])
-        return client
-
-    @pytest.fixture
-    def mock_pairing_data(self):
-        """Create a mock pairing."""
-        return Pairing.from_dict({
-            "id": "p1",
-            "deviceId": "d1",
-            "tag": "Test",
-            "enabled": True,
-        })
-
-    @pytest.fixture
-    def mock_device(self):
-        """Create a mock device info."""
-        return DeviceInfo.from_dict({
-            "connectionState": "Connected",
-            "wirelessSignal": 4,
-        })
 
     async def test_single_failure_returns_cached_data(
         self, mock_hass, mock_entry, mock_client, mock_pairing_data, mock_device
