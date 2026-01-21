@@ -195,11 +195,12 @@ A custom Home Assistant integration for Fermax DuoxMe/Blue video door intercoms,
 
 ### 4.2 Reliability
 
-| ID | Requirement | Priority |
-|----|-------------|----------|
-| REL-01 | Graceful handling of API timeout/errors | Must |
-| REL-02 | Exponential backoff on repeated failures | Should |
-| REL-03 | Entity availability reflects API reachability | Must |
+| ID | Requirement | Priority | Status |
+|----|-------------|----------|--------|
+| REL-01 | Graceful handling of API timeout/errors | Must | ✅ |
+| REL-02 | Exponential backoff on repeated failures | Should | - |
+| REL-03 | Entity availability reflects API reachability | Must | ✅ |
+| REL-04 | Consecutive failure tolerance (3 failures before unavailable) | Must | ✅ |
 
 ### 4.3 Security
 
@@ -246,14 +247,14 @@ devices:
 
 | Entity Type | Entity ID Format | Friendly Name |
 |-------------|------------------|---------------|
-| Lock | `lock.fermax_{device_tag}_{door_name}` | `{Tag} {Door Name}` |
-| Binary Sensor | `binary_sensor.fermax_{device_tag}_status` | `{Tag} Status` |
-| Sensor (Signal) | `sensor.fermax_{device_tag}_signal` | `{Tag} Signal` |
-| Sensor (Calls) | `sensor.fermax_{device_tag}_missed_calls` | `{Tag} Missed Calls` |
-| Switch (Mute) | `switch.fermax_{device_tag}_mute` | `{Tag} Mute` |
-| Camera | `camera.fermax_{device_tag}` | `{Tag} Camera` |
+| Lock | `lock.{device_tag}_{door_name}` | `{Tag} {Door Name}` |
+| Binary Sensor | `binary_sensor.{device_tag}_status` | `{Tag} Status` |
+| Sensor (Signal) | `sensor.{device_tag}_signal_strength` | `{Tag} Signal Strength` |
+| Sensor (Calls) | `sensor.{device_tag}_missed_calls` | `{Tag} Missed Calls` |
+| Switch (Mute) | `switch.{device_tag}_mute` | `{Tag} Mute` |
+| Camera | `camera.{device_tag}_camera` | `{Tag} Camera` |
 
-> `{device_tag}` is the user-defined name from the pairing (e.g., "Sardenya", "Front Door")
+> `{device_tag}` is the user-defined name from the pairing (e.g., "Front Door")
 
 ---
 
@@ -363,8 +364,8 @@ custom_components/fermax_duoxme/
 ├── __init__.py           # Integration setup
 ├── manifest.json         # HACS manifest
 ├── config_flow.py        # Config & options flow
-├── const.py              # Constants
-├── coordinator.py        # Data update coordinator
+├── const.py              # Constants (incl. MAX_CONSECUTIVE_FAILURES)
+├── coordinator.py        # Data update coordinator (with failure tolerance)
 ├── api/
 │   ├── __init__.py
 │   ├── client.py         # API client

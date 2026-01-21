@@ -16,6 +16,7 @@ from .const import (
     CONF_POLLING_INTERVAL,
     DEFAULT_POLLING_INTERVAL,
     DOMAIN,
+    MAX_CONSECUTIVE_FAILURES,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -80,6 +81,8 @@ class FermaxDataUpdateCoordinator(DataUpdateCoordinator[FermaxData]):
         """
         self._client = client
         self._entry = entry
+        self._consecutive_failures = 0
+        self._last_data: FermaxData | None = None
 
         # Get polling interval from options or use default
         polling_interval = entry.options.get(
@@ -101,11 +104,15 @@ class FermaxDataUpdateCoordinator(DataUpdateCoordinator[FermaxData]):
     async def _async_update_data(self) -> FermaxData:
         """Fetch data from API.
 
+        Implements failure tolerance - only raises UpdateFailed after
+        MAX_CONSECUTIVE_FAILURES consecutive failures. Returns the last
+        successful data during transient failures.
+
         Returns:
             FermaxData with current device states
 
         Raises:
-            UpdateFailed: If update fails
+            UpdateFailed: If update fails after MAX_CONSECUTIVE_FAILURES attempts
         """
         try:
             data = FermaxData()
@@ -115,6 +122,9 @@ class FermaxDataUpdateCoordinator(DataUpdateCoordinator[FermaxData]):
 
             if not pairings:
                 _LOGGER.warning("No pairings found for user")
+                # Reset failure counter on successful communication
+                self._consecutive_failures = 0
+                self._last_data = data
                 return data
 
             # For each pairing, get device info
@@ -143,9 +153,37 @@ class FermaxDataUpdateCoordinator(DataUpdateCoordinator[FermaxData]):
                     device_data.wireless_signal,
                 )
 
+            # Success - reset failure counter and store data
+            self._consecutive_failures = 0
+            self._last_data = data
             return data
 
         except FermaxAuthError as err:
+            # Auth errors should fail immediately - no tolerance
+            self._consecutive_failures = MAX_CONSECUTIVE_FAILURES
             raise UpdateFailed(f"Authentication error: {err}") from err
+
         except Exception as err:
+            self._consecutive_failures += 1
+            
+            if self._consecutive_failures >= MAX_CONSECUTIVE_FAILURES:
+                _LOGGER.error(
+                    "API update failed after %d consecutive attempts: %s",
+                    self._consecutive_failures,
+                    err,
+                )
+                raise UpdateFailed(f"Error communicating with API: {err}") from err
+            
+            _LOGGER.warning(
+                "API update failed (attempt %d/%d): %s. Returning last known data.",
+                self._consecutive_failures,
+                MAX_CONSECUTIVE_FAILURES,
+                err,
+            )
+            
+            # Return last successful data to keep entities available
+            if self._last_data is not None:
+                return self._last_data
+            
+            # No previous data - must raise to indicate failure
             raise UpdateFailed(f"Error communicating with API: {err}") from err
