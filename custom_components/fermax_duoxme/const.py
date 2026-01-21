@@ -31,7 +31,6 @@ PLATFORMS: Final = [
     "lock",
     "binary_sensor",
     "sensor",
-    "camera",
 ]
 
 # Configuration keys
