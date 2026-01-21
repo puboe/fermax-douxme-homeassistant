@@ -142,3 +142,182 @@ class TestFermaxData:
         assert len(fermax_data.devices) == 2
         assert fermax_data.get_device("d1").pairing.tag == "Door1"
         assert fermax_data.get_device("d2").pairing.tag == "Door2"
+
+
+class TestCoordinatorFailureTolerance:
+    """Tests for coordinator failure tolerance behavior."""
+
+    @pytest.fixture
+    def mock_hass(self):
+        """Create a mock Home Assistant instance."""
+        hass = MagicMock()
+        hass.data = {}
+        return hass
+
+    @pytest.fixture
+    def mock_entry(self):
+        """Create a mock config entry."""
+        entry = MagicMock()
+        entry.options = {}
+        return entry
+
+    @pytest.fixture
+    def mock_client(self):
+        """Create a mock API client."""
+        client = MagicMock()
+        client.get_pairings = AsyncMock()
+        client.get_device = AsyncMock()
+        client.get_services = AsyncMock(return_value=[])
+        return client
+
+    @pytest.fixture
+    def mock_pairing_data(self):
+        """Create a mock pairing."""
+        return Pairing.from_dict({
+            "id": "p1",
+            "deviceId": "d1",
+            "tag": "Test",
+            "enabled": True,
+        })
+
+    @pytest.fixture
+    def mock_device(self):
+        """Create a mock device info."""
+        return DeviceInfo.from_dict({
+            "connectionState": "Connected",
+            "wirelessSignal": 4,
+        })
+
+    async def test_single_failure_returns_cached_data(
+        self, mock_hass, mock_entry, mock_client, mock_pairing_data, mock_device
+    ):
+        """Test that a single failure returns cached data instead of raising."""
+        from custom_components.fermax_duoxme.coordinator import FermaxDataUpdateCoordinator
+
+        coordinator = FermaxDataUpdateCoordinator(mock_hass, mock_client, mock_entry)
+
+        # First call succeeds - populate cache
+        mock_client.get_pairings.return_value = [mock_pairing_data]
+        mock_client.get_device.return_value = mock_device
+
+        data = await coordinator._async_update_data()
+        assert data is not None
+        assert coordinator._consecutive_failures == 0
+        assert coordinator._last_data is not None
+
+        # Second call fails - should return cached data
+        mock_client.get_pairings.side_effect = Exception("API timeout")
+
+        data = await coordinator._async_update_data()
+        assert data is coordinator._last_data
+        assert coordinator._consecutive_failures == 1
+
+    async def test_two_failures_still_returns_cached_data(
+        self, mock_hass, mock_entry, mock_client, mock_pairing_data, mock_device
+    ):
+        """Test that two consecutive failures still return cached data."""
+        from custom_components.fermax_duoxme.coordinator import FermaxDataUpdateCoordinator
+
+        coordinator = FermaxDataUpdateCoordinator(mock_hass, mock_client, mock_entry)
+
+        # First call succeeds
+        mock_client.get_pairings.return_value = [mock_pairing_data]
+        mock_client.get_device.return_value = mock_device
+        await coordinator._async_update_data()
+
+        # Next two calls fail
+        mock_client.get_pairings.side_effect = Exception("API timeout")
+
+        data = await coordinator._async_update_data()
+        assert coordinator._consecutive_failures == 1
+
+        data = await coordinator._async_update_data()
+        assert coordinator._consecutive_failures == 2
+        assert data is coordinator._last_data
+
+    async def test_three_failures_raises_update_failed(
+        self, mock_hass, mock_entry, mock_client, mock_pairing_data, mock_device
+    ):
+        """Test that three consecutive failures raise UpdateFailed."""
+        from custom_components.fermax_duoxme.coordinator import FermaxDataUpdateCoordinator
+        from homeassistant.helpers.update_coordinator import UpdateFailed
+
+        coordinator = FermaxDataUpdateCoordinator(mock_hass, mock_client, mock_entry)
+
+        # First call succeeds
+        mock_client.get_pairings.return_value = [mock_pairing_data]
+        mock_client.get_device.return_value = mock_device
+        await coordinator._async_update_data()
+
+        # Next three calls fail
+        mock_client.get_pairings.side_effect = Exception("API timeout")
+
+        await coordinator._async_update_data()  # failure 1
+        await coordinator._async_update_data()  # failure 2
+
+        with pytest.raises(UpdateFailed):
+            await coordinator._async_update_data()  # failure 3 - raises
+
+        assert coordinator._consecutive_failures == 3
+
+    async def test_success_resets_failure_counter(
+        self, mock_hass, mock_entry, mock_client, mock_pairing_data, mock_device
+    ):
+        """Test that a successful call resets the failure counter."""
+        from custom_components.fermax_duoxme.coordinator import FermaxDataUpdateCoordinator
+
+        coordinator = FermaxDataUpdateCoordinator(mock_hass, mock_client, mock_entry)
+
+        # First call succeeds
+        mock_client.get_pairings.return_value = [mock_pairing_data]
+        mock_client.get_device.return_value = mock_device
+        await coordinator._async_update_data()
+
+        # Two failures
+        mock_client.get_pairings.side_effect = Exception("API timeout")
+        await coordinator._async_update_data()
+        await coordinator._async_update_data()
+        assert coordinator._consecutive_failures == 2
+
+        # Success resets counter
+        mock_client.get_pairings.side_effect = None
+        mock_client.get_pairings.return_value = [mock_pairing_data]
+        await coordinator._async_update_data()
+        assert coordinator._consecutive_failures == 0
+
+    async def test_auth_error_fails_immediately(
+        self, mock_hass, mock_entry, mock_client, mock_pairing_data, mock_device
+    ):
+        """Test that authentication errors fail immediately without tolerance."""
+        from custom_components.fermax_duoxme.coordinator import FermaxDataUpdateCoordinator
+        from custom_components.fermax_duoxme.api.auth import FermaxAuthError
+        from homeassistant.helpers.update_coordinator import UpdateFailed
+
+        coordinator = FermaxDataUpdateCoordinator(mock_hass, mock_client, mock_entry)
+
+        # First call succeeds
+        mock_client.get_pairings.return_value = [mock_pairing_data]
+        mock_client.get_device.return_value = mock_device
+        await coordinator._async_update_data()
+
+        # Auth error should fail immediately
+        mock_client.get_pairings.side_effect = FermaxAuthError("Token expired")
+
+        with pytest.raises(UpdateFailed):
+            await coordinator._async_update_data()
+
+    async def test_no_cached_data_raises_on_first_failure(
+        self, mock_hass, mock_entry, mock_client
+    ):
+        """Test that failure with no cached data raises UpdateFailed."""
+        from custom_components.fermax_duoxme.coordinator import FermaxDataUpdateCoordinator
+        from homeassistant.helpers.update_coordinator import UpdateFailed
+
+        coordinator = FermaxDataUpdateCoordinator(mock_hass, mock_client, mock_entry)
+
+        # First call fails - no cached data available
+        mock_client.get_pairings.side_effect = Exception("API timeout")
+
+        with pytest.raises(UpdateFailed):
+            await coordinator._async_update_data()
+

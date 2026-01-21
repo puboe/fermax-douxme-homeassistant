@@ -151,6 +151,7 @@ The integration uses Home Assistant's `DataUpdateCoordinator` pattern:
 - Polls API every 30 seconds (configurable)
 - All entities subscribe to coordinator updates
 - Handles token refresh transparently
+- **Failure tolerance**: Tolerates up to 3 consecutive API failures before marking entities unavailable (returns cached data during transient failures)
 
 ### Unique IDs
 - **Config Entry**: Based on user ID from API
@@ -267,7 +268,7 @@ logger:
 |-------|-------|-----|
 | "Invalid credentials" | Wrong email/password | Use same as DuoxMe app |
 | "No devices found" | Device not paired | Pair in mobile app first |
-| Entity shows "unavailable" | API timeout/error | Check coordinator logs |
+| Entity shows "unavailable" | API timeout/error (3+ consecutive failures) | Check coordinator logs |
 
 ---
 

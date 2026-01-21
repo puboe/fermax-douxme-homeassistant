@@ -195,11 +195,12 @@ A custom Home Assistant integration for Fermax DuoxMe/Blue video door intercoms,
 
 ### 4.2 Reliability
 
-| ID | Requirement | Priority |
-|----|-------------|----------|
-| REL-01 | Graceful handling of API timeout/errors | Must |
-| REL-02 | Exponential backoff on repeated failures | Should |
-| REL-03 | Entity availability reflects API reachability | Must |
+| ID | Requirement | Priority | Status |
+|----|-------------|----------|--------|
+| REL-01 | Graceful handling of API timeout/errors | Must | ✅ |
+| REL-02 | Exponential backoff on repeated failures | Should | - |
+| REL-03 | Entity availability reflects API reachability | Must | ✅ |
+| REL-04 | Consecutive failure tolerance (3 failures before unavailable) | Must | ✅ |
 
 ### 4.3 Security
 
@@ -363,8 +364,8 @@ custom_components/fermax_duoxme/
 ├── __init__.py           # Integration setup
 ├── manifest.json         # HACS manifest
 ├── config_flow.py        # Config & options flow
-├── const.py              # Constants
-├── coordinator.py        # Data update coordinator
+├── const.py              # Constants (incl. MAX_CONSECUTIVE_FAILURES)
+├── coordinator.py        # Data update coordinator (with failure tolerance)
 ├── api/
 │   ├── __init__.py
 │   ├── client.py         # API client

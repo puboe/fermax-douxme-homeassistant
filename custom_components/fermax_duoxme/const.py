@@ -22,6 +22,9 @@ DEFAULT_POLLING_INTERVAL: Final = 30  # seconds
 MIN_POLLING_INTERVAL: Final = 15
 MAX_POLLING_INTERVAL: Final = 300
 
+# Failure tolerance - number of consecutive failures before marking entities unavailable
+MAX_CONSECUTIVE_FAILURES: Final = 3
+
 # Token lifetimes (from API documentation)
 ACCESS_TOKEN_DEFAULT_LIFETIME: Final = 345599 # ~4 days
 REFRESH_TOKEN_LIFETIME_YEARS: Final = 5
