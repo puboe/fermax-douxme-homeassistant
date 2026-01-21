@@ -247,14 +247,14 @@ devices:
 
 | Entity Type | Entity ID Format | Friendly Name |
 |-------------|------------------|---------------|
-| Lock | `lock.fermax_{device_tag}_{door_name}` | `{Tag} {Door Name}` |
-| Binary Sensor | `binary_sensor.fermax_{device_tag}_status` | `{Tag} Status` |
-| Sensor (Signal) | `sensor.fermax_{device_tag}_signal` | `{Tag} Signal` |
-| Sensor (Calls) | `sensor.fermax_{device_tag}_missed_calls` | `{Tag} Missed Calls` |
-| Switch (Mute) | `switch.fermax_{device_tag}_mute` | `{Tag} Mute` |
-| Camera | `camera.fermax_{device_tag}` | `{Tag} Camera` |
+| Lock | `lock.{device_tag}_{door_name}` | `{Tag} {Door Name}` |
+| Binary Sensor | `binary_sensor.{device_tag}_status` | `{Tag} Status` |
+| Sensor (Signal) | `sensor.{device_tag}_signal_strength` | `{Tag} Signal Strength` |
+| Sensor (Calls) | `sensor.{device_tag}_missed_calls` | `{Tag} Missed Calls` |
+| Switch (Mute) | `switch.{device_tag}_mute` | `{Tag} Mute` |
+| Camera | `camera.{device_tag}_camera` | `{Tag} Camera` |
 
-> `{device_tag}` is the user-defined name from the pairing (e.g., "Sardenya", "Front Door")
+> `{device_tag}` is the user-defined name from the pairing (e.g., "Front Door")
 
 ---
 

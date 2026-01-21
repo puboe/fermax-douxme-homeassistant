@@ -51,10 +51,10 @@ For each paired device, the integration creates:
 
 | Entity Type | Entity | Description |
 |-------------|--------|-------------|
-| Lock | `lock.fermax_{tag}_{door}` | Door control - one per visible door |
-| Binary Sensor | `binary_sensor.fermax_{tag}_status` | Device connectivity |
-| Sensor | `sensor.fermax_{tag}_signal_strength` | WiFi signal (0-100%) |
-| Camera | `camera.fermax_{tag}` | PhotoCaller (if enabled) |
+| Lock | `lock.{tag}_{door}` | Door control - one per visible door |
+| Binary Sensor | `binary_sensor.{tag}_status` | Device connectivity |
+| Sensor | `sensor.{tag}_signal_strength` | WiFi signal (0-100%) |
+| Camera | `camera.{tag}_camera` | PhotoCaller (if enabled) |
 
 > **Note:** The `{tag}` is the name you gave your device in the Fermax DuoxMe app (e.g., "Front Door").
 
@@ -72,7 +72,7 @@ automation:
     action:
       - service: lock.unlock
         target:
-          entity_id: lock.fermax_front_door_zero
+          entity_id: lock.front_door_door_zero
 ```
 
 ### Notify when device goes offline
@@ -81,7 +81,7 @@ automation:
   - alias: "Alert intercom offline"
     trigger:
       - platform: state
-        entity_id: binary_sensor.fermax_front_door_status
+        entity_id: binary_sensor.front_door_status
         to: "off"
     action:
       - service: notify.mobile_app
