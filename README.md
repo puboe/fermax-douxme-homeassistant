@@ -1,7 +1,9 @@
 # Fermax DuoxMe for Home Assistant
 
 [![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
-[![GitHub Release](https://img.shields.io/github/release/puboe/fermax-douxme-homeassistant.svg)](https://github.com/puboe/fermax-douxme-homeassistant/releases)
+[![GitHub Release](https://img.shields.io/github/v/release/puboe/fermax-douxme-homeassistant?include_prereleases)](https://github.com/puboe/fermax-douxme-homeassistant/releases)
+[![Ko-Fi](https://img.shields.io/static/v1.svg?label=%20&message=Ko-Fi&color=F16061&logo=ko-fi&logoColor=white)](https://ko-fi.com/puboe)
+
 
 Home Assistant integration for Fermax DuoxMe video door intercoms.
 
@@ -9,14 +11,7 @@ Home Assistant integration for Fermax DuoxMe video door intercoms.
 
 - 🔐 **Door Control** - Unlock doors from Home Assistant (F1, F2, General doors)
 - 📶 **Device Status** - Monitor connection status and signal strength
-- 📷 **PhotoCaller Ready** - Camera entity for still images (requires Phase 2)
 - 🌍 **Multi-language** - EN, ES, IT, PT, DE translations
-
-### Coming in Phase 2
-- 📞 Call history sensors and logbook events
-- 🔕 Mute notifications toggle
-- 📷 PhotoCaller photos from doorbell rings
-- ⚡ Real-time FCM notifications
 
 ## Installation
 
@@ -102,9 +97,6 @@ Make sure you're using the same email and password as the Fermax DuoxMe mobile a
 ### No devices found
 Ensure your intercom is paired in the DuoxMe app and showing online.
 
-### Door won't open
-Check that your subscription allows door control. FREE accounts have a 4 opens/day limit.
-
 ## Known Limitations
 
 - **No live video streaming** - Only PhotoCaller entity (photos coming in Phase 2)
@@ -143,11 +135,6 @@ pytest tests/ --cov=custom_components/fermax_duoxme --cov-report=term-missing
 # Run specific test file
 pytest tests/test_models.py -v
 ```
-
-## Credits
-
-- API reverse-engineering based on [bluecon](https://github.com/AfonsoFGarcia/bluecon) by Afonso Garcia
-- Inspired by [hass-bluecon](https://github.com/AfonsoFGarcia/hass-bluecon)
 
 ## License
 
