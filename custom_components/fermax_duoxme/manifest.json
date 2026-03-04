@@ -9,6 +9,6 @@
   "documentation": "https://github.com/puboe/fermax-douxme-homeassistant",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/puboe/fermax-douxme-homeassistant/issues",
-  "requirements": [],
+  "requirements": ["aiohttp>=3.13.3", "PyJWT>=2.10.1"],
   "version": "1.0.0"
 }
